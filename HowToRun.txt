@@ -1,0 +1,33 @@
+=== Как установить виртуальное окружение:
+1. Заходим в папку с кодом:
+cd /путь_до_папки/boost-anno-tools-src
+
+2. Устанавливаем virtualenv
+pip3 install virtualenv
+
+3. Создаем виртуальное окружение boostvirt
+python3 -m venv boostvirt
+
+4. Активируем виртуальное окружение:
+source boostvirt/bin/activate
+
+5. Устанавливаем зависимости:
+pip3 install -r requirements.txt
+
+
+
+=== Как запустить тулзу с виртуальным окружением:
+1. Заходим в папку с кодом:
+cd /путь_до_папки/boost-anno-tools-src
+
+2. Активируем виртуальное окружение:
+source boostvirt/bin/activate
+
+3. Запускаем тулзу:
+python3 run_ocr_annotating.py 'путь_до_данных\' 'имя_игры'
+
+
+
+=== Если есть проблемы с python3 или pip3:
+Замените все вызовы pip3 (описанные выше) на pip
+Замените все вызовы python3 на python
