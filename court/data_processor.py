@@ -5,6 +5,8 @@ import numpy as np
 
 from court.utils import NumpyEncoder, reprojection_loss
 
+NUM_POINTS = 33
+
 
 class DataProcessor:
     ''' Loads, prepares and manages data (images and points) '''
@@ -114,7 +116,7 @@ class DataProcessor:
                     theta = np.array(p['theta'])[0]
                     # score = p['score']
                 else:
-                    poi = np.array([(-1,-1)]*29, dtype=np.float32)
+                    poi = np.array([(-1,-1)]*NUM_POINTS, dtype=np.float32)
                 self.frames.append(DataProcessor.DLFrame(path, poi, score, theta))
         else:
             raise FileNotFoundError
