@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 from timeit import default_timer as timer
 
-from court.data_processor import DataProcessor
-from court.ui_renderer import UIRenderer
+from football_pitch.data_processor import DataProcessor
+from football_pitch.ui_renderer import UIRenderer
 from ui.confirmation import display_confirmation
 
 

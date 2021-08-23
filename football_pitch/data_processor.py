@@ -5,6 +5,8 @@ import numpy as np
 
 from court.utils import NumpyEncoder, reprojection_loss
 
+NUM_POINTS = 33
+
 
 class DataProcessor:
     ''' Loads, prepares and manages data (images and points) '''
@@ -59,6 +61,8 @@ class DataProcessor:
             for i, pt in enumerate(self.poi):
                 if pt[0] < 0 or pt[0] > 1.0 or pt[1] < 0 or pt[1] > 1:
                     self.hot_poi[i] = False
+                else:
+                    self.hot_poi[i] = True
 
         def set_point_state(self, idx, hot=None, use_proj=True):
             self._validate_point_idx(idx)
@@ -97,20 +101,22 @@ class DataProcessor:
 
         # Parse image paths and read predictions json:
         self.frames = []
-        if os.path.isdir(img_dir) and os.path.isfile(preds_path):
+        if os.path.isdir(img_dir):
             img_paths = [os.path.join(img_dir, file) for file in os.listdir(img_dir) if not file.endswith('.')]
-            preds = json.load(open(preds_path, 'r'))
+            preds = None
+            if preds_path is not None:
+                preds = json.load(open(preds_path, 'r'))
             for path in img_paths:
                 _,filename = os.path.split(path)
                 name = filename.split('.')[0]
                 poi, theta, score = None, None, None
-                if name in preds:
+                if preds is not None and name in preds:
                     p = preds[name]
                     poi = np.array(p['poi'])
                     theta = np.array(p['theta'])[0]
                     # score = p['score']
                 else:
-                    print ('No predictions found for image \'{}\''.format(path))
+                    poi = np.array([(-1,-1)]*NUM_POINTS, dtype=np.float32)
                 self.frames.append(DataProcessor.DLFrame(path, poi, score, theta))
         else:
             raise FileNotFoundError
