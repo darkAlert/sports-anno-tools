@@ -3,7 +3,7 @@ import cv2
 import json
 import numpy as np
 
-from court.utils import NumpyEncoder, reprojection_loss
+from football_pitch.utils import NumpyEncoder, reprojection_loss
 
 NUM_POINTS = 33
 
@@ -101,8 +101,10 @@ class DataProcessor:
 
         # Parse image paths and read predictions json:
         self.frames = []
+        self.name_to_idx_map = {}
         if os.path.isdir(img_dir):
             img_paths = [os.path.join(img_dir, file) for file in os.listdir(img_dir) if not file.endswith('.')]
+            img_paths = sorted(img_paths)
             preds = None
             if preds_path is not None:
                 preds = json.load(open(preds_path, 'r'))
@@ -118,6 +120,7 @@ class DataProcessor:
                 else:
                     poi = np.array([(-1,-1)]*NUM_POINTS, dtype=np.float32)
                 self.frames.append(DataProcessor.DLFrame(path, poi, score, theta))
+                self.name_to_idx_map[name] = len(self.frames)-1
         else:
             raise FileNotFoundError
 
@@ -354,7 +357,8 @@ class DataProcessor:
         assert self.frames
         loaded_frames = json.load(open(path, 'r'))
 
-        for idx,(k,v) in enumerate(loaded_frames.items()):
+        for k,v in loaded_frames.items():
+            idx = self.name_to_idx_map[k]
             if 'poi' in v:
                 self.frames[idx].set_poi(v['poi'])
             if 'elapsed' in v:
@@ -368,7 +372,7 @@ class DataProcessor:
         os.remove(path)
 
         for k,v in restored_frames.items():
-            idx = int(k)
+            idx = self.name_to_idx_map[k]
             if 'poi' in v:
                 self.frames[idx].set_poi(v['poi'])
             if 'elapsed' in v:

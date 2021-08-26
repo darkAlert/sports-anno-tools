@@ -1,11 +1,10 @@
 import os
 import json
 from shutil import copyfile
-import numpy as np
 
-from court.data_processor import DataProcessor
+from football_pitch.data_processor import DataProcessor
 from court.optimal_poi import find_optimal_poi, load_preds
-from court.utils import NumpyEncoder
+from football_pitch.utils import NumpyEncoder
 
 
 def prepare_data(court_poi_path, images_dir, preds_dir, dst_dir=None, target_num_poi=5, pieces_per_video=None):
