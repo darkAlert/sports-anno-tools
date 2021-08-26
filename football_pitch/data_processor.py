@@ -16,7 +16,7 @@ class DataProcessor:
         ''' Represents a frame as an image, points of interest and other meta information '''
         def __init__(self, img_path, poi=None, score=None, theta=None):
             self.img_path = img_path
-            self.name = PurePath(img_path).parts[-1]
+            self.name = PurePath(img_path).stem
             self.poi = poi
             self.orig_poi = np.copy(poi)
             self.score = score
@@ -107,11 +107,9 @@ class DataProcessor:
         if os.path.isdir(img_dir):
             img_paths = [os.path.join(img_dir, file) for file in os.listdir(img_dir) if not file.endswith('.')]
             img_paths = sorted(img_paths)
-            preds = None
-            if preds_path is not None:
-                preds = json.load(open(preds_path, 'r'))
+            preds = json.load(open(preds_path, 'r')) if preds_path is not None else None
             for path in img_paths:
-                name = PurePath(path).parts[-1]
+                name = PurePath(path).stem
                 poi, theta, score = None, None, None
                 if preds is not None and name in preds:
                     p = preds[name]
