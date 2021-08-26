@@ -2,6 +2,7 @@ import os
 import cv2
 import json
 import numpy as np
+from pathlib import PurePath
 
 from football_pitch.utils import NumpyEncoder, reprojection_loss
 
@@ -15,6 +16,7 @@ class DataProcessor:
         ''' Represents a frame as an image, points of interest and other meta information '''
         def __init__(self, img_path, poi=None, score=None, theta=None):
             self.img_path = img_path
+            self.name = PurePath(img_path).parts[-1]
             self.poi = poi
             self.orig_poi = np.copy(poi)
             self.score = score
@@ -109,8 +111,7 @@ class DataProcessor:
             if preds_path is not None:
                 preds = json.load(open(preds_path, 'r'))
             for path in img_paths:
-                _,filename = os.path.split(path)
-                name = filename.split('.')[0]
+                name = PurePath(path).parts[-1]
                 poi, theta, score = None, None, None
                 if preds is not None and name in preds:
                     p = preds[name]
@@ -318,14 +319,13 @@ class DataProcessor:
     def save(self, dst_path):
         output = {}
         for frame in self.frames:
-            name = frame.img_path.split('/')[-1].split('.')[0]
             poi = np.copy(frame.poi)
             poi[frame.hot_poi == False] = (-1,-1)
             elapsed = float('{:.3f}'.format(frame.elapsed))
             out = {'theta': frame.theta, 'poi': poi, 'elapsed': elapsed}
             if frame.reset:
                 out['reset'] = True
-            output[name] = out
+            output[frame.name] = out
 
         with open(dst_path, 'w') as file:
             json.dump(output, file, cls=NumpyEncoder, indent=2)
