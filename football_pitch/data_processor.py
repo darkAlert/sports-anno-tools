@@ -48,7 +48,6 @@ class DataProcessor:
             self.poi[idx] = coords
             self.modified = True
             self.saved = False
-            self.determine_visible_poi()
 
         def add_elapsed_time(self, elapsed):
             self.elapsed += elapsed
