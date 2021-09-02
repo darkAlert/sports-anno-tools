@@ -6,7 +6,7 @@ from ui.confirmation import display_confirmation
 
 
 DEFAULT_PITCH_IMAGE = 'football_pitch/assets/pitch_image.png'
-DEFAULT_PITCH_MASK = 'football_pitch/assets/pitch_template.png'
+DEFAULT_PITCH_MASK = 'football_pitch/assets/pitch_mask_nc4_hd.png'
 DEFAULT_PITCH_POI = 'football_pitch/assets/template_pitch_points.json'
 DEFAULT_PITCH_IMAGE_SIZE = (1920, 1080)
 UI_CANVAS_SIZE = (1920, 1080)
