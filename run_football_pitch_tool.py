@@ -16,6 +16,8 @@ DEFAULT_PREDS_NAME='preds.json'
 DEFAULT_OUTPUT_FOLDER='manual_anno'
 DEFAULT_OUTPUT_NAME='manual_anno.json'
 DEFAULT_TEMP_FILE_SUFFIX = '_processing_'
+NUM_POINTS = 33
+IGNORE_POINTS = [12, 13, 19, 20]
 
 
 def get_args():
@@ -80,6 +82,8 @@ def run_mapping():
                                         DEFAULT_PITCH_POI,
                                         DEFAULT_PITCH_IMAGE_SIZE,
                                         UI_CANVAS_SIZE,
+                                        NUM_POINTS,
+                                        IGNORE_POINTS,
                                         temp_path=temp_path)
     except IOError as e:
         print(str(e))

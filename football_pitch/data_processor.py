@@ -6,8 +6,6 @@ from pathlib import PurePath
 
 from football_pitch.utils import NumpyEncoder, reprojection_loss
 
-NUM_POINTS = 33
-
 
 class DataProcessor:
     ''' Loads, prepares and manages data (images and points) '''
@@ -93,7 +91,9 @@ class DataProcessor:
             self.saved = False
             self.reset = True
 
-    def __init__(self, img_dir, preds_path, court_mask_path, court_poi_path, court_size=(1920,1080)):
+    def __init__(self, img_dir, preds_path, court_mask_path, court_poi_path,
+                 court_size=(1920,1080), num_points=33, ignore_points=None):
+        self.ignore_poi = ignore_points
         self.poi_buffer = []     # for keeping PoI changes
 
         # Load court image and court PoI:
@@ -116,7 +116,7 @@ class DataProcessor:
                     theta = np.array(p['theta'])[0]
                     # score = p['score']
                 else:
-                    poi = np.array([(-1,-1)]*NUM_POINTS, dtype=np.float32)
+                    poi = np.array([(-1,-1)]*num_points, dtype=np.float32)
                 self.frames.append(DataProcessor.DLFrame(path, poi, score, theta))
                 self.name_to_idx_map[name] = len(self.frames)-1
         else:
@@ -169,7 +169,11 @@ class DataProcessor:
                 frame.proj_court = None
                 return frame
             frame.proj_poi = cv2.perspectiveTransform(self.court_poi, frame.theta)[0]
-            frame.reproj_error = reprojection_loss(frame.poi, frame.proj_poi, frame.hot_poi, (1280,720))
+
+            # Calculate the Repojection RMSE:
+            nonzeros = np.copy(frame.hot_poi)
+            nonzeros[self.ignore_poi] = False
+            frame.reproj_error = reprojection_loss(frame.poi, frame.proj_poi, nonzeros, (1280, 720))
 
             # Rescale theta (homography) to the image size:
             src_h, src_w = self.court_mask.shape[0:2]

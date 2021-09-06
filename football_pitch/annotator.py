@@ -37,8 +37,11 @@ class FootballPitchAnnotator(object):
                  court_poi_path,
                  court_size,
                  canvas_size=(1920,1080),
+                 num_points=33,
+                 ignore_points=None,
                  temp_path=None):
-        self.data = DataProcessor(img_dir, preds_path, court_mask_path, court_poi_path, court_size)
+        self.data = DataProcessor(img_dir, preds_path, court_mask_path, court_poi_path,
+                                  court_size, num_points, ignore_points)
         window_name = 'Manual Mapping AI'# os.path.basename(img_dir)
         court_img = cv2.imread(court_img_path, cv2.IMREAD_COLOR)
         court_poi = self.data.court_poi[0]
