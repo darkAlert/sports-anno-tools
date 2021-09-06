@@ -2,6 +2,7 @@ import os
 import cv2
 import json
 import numpy as np
+from pathlib import PurePath
 
 from court.utils import NumpyEncoder, reprojection_loss
 
@@ -13,6 +14,7 @@ class DataProcessor:
         ''' Represents a frame as an image, points of interest and other meta information '''
         def __init__(self, img_path, poi=None, score=None, theta=None):
             self.img_path = img_path
+            self.name = PurePath(img_path).stem
             self.poi = poi
             self.orig_poi = np.copy(poi)
             self.score = score
@@ -44,7 +46,6 @@ class DataProcessor:
             self.poi[idx] = coords
             self.modified = True
             self.saved = False
-            self.determine_visible_poi()
 
         def add_elapsed_time(self, elapsed):
             self.elapsed += elapsed
@@ -59,6 +60,8 @@ class DataProcessor:
             for i, pt in enumerate(self.poi):
                 if pt[0] < 0 or pt[0] > 1.0 or pt[1] < 0 or pt[1] > 1:
                     self.hot_poi[i] = False
+                else:
+                    self.hot_poi[i] = True
 
         def set_point_state(self, idx, hot=None, use_proj=True):
             self._validate_point_idx(idx)
@@ -88,7 +91,9 @@ class DataProcessor:
             self.saved = False
             self.reset = True
 
-    def __init__(self, img_dir, preds_path, court_mask_path, court_poi_path, court_size=(1920,1080)):
+    def __init__(self, img_dir, preds_path, court_mask_path, court_poi_path,
+                 court_size=(1920,1080), num_points=52, ignore_points=None):
+        self.ignore_poi = ignore_points
         self.poi_buffer = []     # for keeping PoI changes
 
         # Load court image and court PoI:
@@ -97,21 +102,23 @@ class DataProcessor:
 
         # Parse image paths and read predictions json:
         self.frames = []
-        if os.path.isdir(img_dir) and os.path.isfile(preds_path):
+        self.name_to_idx_map = {}
+        if os.path.isdir(img_dir):
             img_paths = [os.path.join(img_dir, file) for file in os.listdir(img_dir) if not file.endswith('.')]
-            preds = json.load(open(preds_path, 'r'))
+            img_paths = sorted(img_paths)
+            preds = json.load(open(preds_path, 'r')) if preds_path is not None else None
             for path in img_paths:
-                _,filename = os.path.split(path)
-                name = filename.split('.')[0]
+                name = PurePath(path).stem
                 poi, theta, score = None, None, None
-                if name in preds:
+                if preds is not None and name in preds:
                     p = preds[name]
                     poi = np.array(p['poi'])
                     theta = np.array(p['theta'])[0]
                     # score = p['score']
                 else:
-                    print ('No predictions found for image \'{}\''.format(path))
+                    poi = np.array([(-1, -1)] * num_points, dtype=np.float32)
                 self.frames.append(DataProcessor.DLFrame(path, poi, score, theta))
+                self.name_to_idx_map[name] = len(self.frames) - 1
         else:
             raise FileNotFoundError
 
@@ -162,7 +169,11 @@ class DataProcessor:
                 frame.proj_court = None
                 return frame
             frame.proj_poi = cv2.perspectiveTransform(self.court_poi, frame.theta)[0]
-            frame.reproj_error = reprojection_loss(frame.poi, frame.proj_poi, frame.hot_poi, (1280,720))
+
+            # Calculate the Repojection RMSE:
+            nonzeros = np.copy(frame.hot_poi)
+            nonzeros[self.ignore_poi] = False
+            frame.reproj_error = reprojection_loss(frame.poi, frame.proj_poi, nonzeros, (1280,720))
 
             # Rescale theta (homography) to the image size:
             src_h, src_w = self.court_mask.shape[0:2]
@@ -309,14 +320,13 @@ class DataProcessor:
     def save(self, dst_path):
         output = {}
         for frame in self.frames:
-            name = frame.img_path.split('/')[-1].split('.')[0]
             poi = np.copy(frame.poi)
             poi[frame.hot_poi == False] = (-1,-1)
             elapsed = float('{:.3f}'.format(frame.elapsed))
             out = {'theta': frame.theta, 'poi': poi, 'elapsed': elapsed}
             if frame.reset:
                 out['reset'] = True
-            output[name] = out
+            output[frame.name] = out
 
         with open(dst_path, 'w') as file:
             json.dump(output, file, cls=NumpyEncoder, indent=2)
@@ -348,7 +358,8 @@ class DataProcessor:
         assert self.frames
         loaded_frames = json.load(open(path, 'r'))
 
-        for idx,(k,v) in enumerate(loaded_frames.items()):
+        for k, v in loaded_frames.items():
+            idx = self.name_to_idx_map[k]
             if 'poi' in v:
                 self.frames[idx].set_poi(v['poi'])
             if 'elapsed' in v:
@@ -361,8 +372,8 @@ class DataProcessor:
         restored_frames = {k: v for line in open(path, 'r') for k, v in json.loads(line).items()}
         os.remove(path)
 
-        for k,v in restored_frames.items():
-            idx = int(k)
+        for k, v in restored_frames.items():
+            idx = self.name_to_idx_map[k]
             if 'poi' in v:
                 self.frames[idx].set_poi(v['poi'])
             if 'elapsed' in v:
