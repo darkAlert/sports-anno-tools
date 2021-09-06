@@ -7,7 +7,7 @@ from ui.confirmation import display_confirmation
 
 DEFAULT_COURT_IMAGE = 'court/assets/template_ncaa_v4_s.png'
 DEFAULT_COURT_MASK = 'court/assets/mask_ncaa_v4_nc4_m.png'
-DEFAULT_COURT_POI = 'court/assets/template_ncaa_v4_points.json'
+DEFAULT_COURT_POI = 'court/assets/template_ncaa_v4_points58.json'
 DEFAULT_COURT_IMAGE_SIZE = (1920, 1080)
 UI_CANVAS_SIZE = (1920, 1080)
 DEFAULT_FRAMES_FOLDER = 'frames'
@@ -16,6 +16,8 @@ DEFAULT_PREDS_NAME='preds.json'
 DEFAULT_OUTPUT_FOLDER='manual_anno'
 DEFAULT_OUTPUT_NAME='manual_anno.json'
 DEFAULT_TEMP_FILE_SUFFIX = '_processing_'
+NUM_POINTS = 58
+IGNORE_POINTS = [1, 2, 52, 53, 54, 55, 56, 57]
 
 
 def get_args():
@@ -64,7 +66,9 @@ def run_mapping():
 
     # Get paths:
     img_dir, preds_path, output_dir, output_path, temp_path = get_paths(args.data_dir, args.name)
-    assert os.path.isdir(img_dir) and os.path.isfile(preds_path), '{} {}'.format(img_dir, preds_path)
+    if not os.path.exists(preds_path):
+        preds_path = None
+    assert os.path.isdir(img_dir), '{}'.format(img_dir)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -78,6 +82,8 @@ def run_mapping():
                                 DEFAULT_COURT_POI,
                                 DEFAULT_COURT_IMAGE_SIZE,
                                 UI_CANVAS_SIZE,
+                                NUM_POINTS,
+                                IGNORE_POINTS,
                                 temp_path=temp_path)
     except IOError as e:
         print(str(e))
