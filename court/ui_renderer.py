@@ -290,7 +290,7 @@ class UIRenderer:
         m = cv2.merge([m, m, m])
         overlaid = (img1 & m) + img2 * alpha + (img1 & (255 - m)) * (1 - alpha)
 
-        return overlaid.astype('uint8')
+        return np.ascontiguousarray(overlaid.astype('uint8'))
 
     @staticmethod
     def draw_text(img, text, pos, color=(255, 255, 255), scale=0.75, lineType=1,
