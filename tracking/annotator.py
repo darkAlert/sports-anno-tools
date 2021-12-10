@@ -43,7 +43,8 @@ class TrackingAnnotator:
         # Handle keyboard events:
         while True:
             if self.ui_renderer.is_window_visible() == False:
-                self.data.save_frame(self.temp_path)
+                self.save()
+                self.ui_renderer.set_saved_counter(30)
                 return False
 
             key = cv2.waitKey(20)
